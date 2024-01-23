@@ -149,48 +149,7 @@ public class BigInt16 {
         bs.binary = bs.binary.substring(k);
         return bs.bsToBi16();
     }
-//    public BigInt16 longShiftBitsToLow(int k) {
-//        if (k <= 0 || k >= 128*16) {
-//            return this;
-//        }
-//        int numOfShifts = k / 16;
-//        int shift = k % 16;
-//        long carry = 0;
-//        BigInt16 C = new BigInt16();
-//        if (shift != 0) {
-//            for (int i = 128 - 1; i > 0; i--) {
-//                C.arr[i] = (this.arr[i] >> shift) + (carry << (16-shift)) ;
-//                carry = this.arr[i] & shift;
-//            }
-//            C.arr[0] = (this.arr[0] >> (shift)) + (carry << (16 - shift)) & b;
-//            BigInt16 out = new BigInt16();
-//            for (int j =  128 - 1 - numOfShifts; j >= 0; j--) {
-//                out.arr[j] = C.arr[j+numOfShifts];
-//            }
-//            return out;
-//        }
-//        else {
-//            for (int i  = this.size() - 1; i >= 0;i--) {
-//                C.arr[i] = this.arr[i];
-//            }
-//            BigInt16 out =  new BigInt16();
-//            for (int j = 128 - 1 -numOfShifts; j >= 0; j--) {
-//                out.arr[j] = C.arr[j + numOfShifts];
-//            }
-//            return out;
-//        }
-//    }
-//    private BigInt16 longShiftBitsToHigh2(int k) {
-//        BinaryString bs = new BinaryString(this);
-//        if (128 * 16 + 1 <= k) {
-//            return this;
-//        }
-//        for (int i = 0; i < k; i++) {
-//            bs.binary = bs.binary + "0";
-//        }
-//
-//        return bs.bsToBi16();
-//    }
+
     public BigInt16 longShiftBitsToHigh(int k) {
         if (k <= 0 || k > 128 * 16) {
             return this;
@@ -350,22 +309,7 @@ public class BigInt16 {
         BigInt16 C = A.longMul(B);
         return C.barretReduction(mod, mu);
     }
-    /*
-    public BigInt16 longPower(BigInt16 B) {
-        BigInt16 C = new BigInt16(1);
-        BigInt16 A = new BigInt16(this);
-        String Bb = new StringBuilder((new BinaryString(B).toString())).reverse().toString();
-        for (int i = Bb.length() - 1; i >= 0; i--) {
-            if (Bb.charAt(i) == '1') {
-                C = A.longMul(C);
-            }
-            if (i > 0) {
-                C = C.longMul(C);
-            }
-        }
-        return C;
-    }
-     */
+    
     public BigInt16 longModPowerReduction(BigInt16 B, BigInt16 N, BigInt16 mu) {
         BigInt16 A = new BigInt16(this);
         A = A.barretReduction(N, mu);
