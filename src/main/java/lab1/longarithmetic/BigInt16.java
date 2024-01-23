@@ -1,7 +1,5 @@
 package lab1.longarithmetic;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class BigInt16 {
     private final int w = 16;
@@ -9,7 +7,7 @@ public class BigInt16 {
     public long[] arr;
     public BigInt16(HexString hex) {
         // 2 symbols - 1 byte
-        arr = new long[2048 / w];
+        arr = new long[2048 / w + 1];
         String[] hexArray = hex.splitString(4);
         int i = hexArray.length - 1;
         for (String s : hexArray) {
@@ -18,20 +16,22 @@ public class BigInt16 {
         }
     }
     public BigInt16() {
-        this.arr = new long[2048 / w];
+        this.arr = new long[2048 / w + 1];
     }
     public BigInt16(BigInt16 b) {
         this.arr = Arrays.copyOf(b.arr, b.arr.length);
     }
     public BigInt16(long c) {
         // 0 <= c <= 2^16 - 1
-        this.arr = new long[2048/ w];
+        this.arr = new long[2048/ w + 1];
         this.arr[0] = c;
     }
     public BigInt16 add(BigInt16 b) {
         long carry = 0;
+        int x = this.arr.length;
         BigInt16 c = new BigInt16();
-        for (int i = 0; i <= 2048/ w - 1; i++) {
+        c.arr = new long[x];
+        for (int i = 0; i <= x - 1; i++) {
             long tmp = this.arr[i] + b.arr[i] + carry;
             c.arr[i] = tmp & 65535L;
             carry = tmp >> w;
@@ -40,18 +40,19 @@ public class BigInt16 {
     }
     public int size() {
         int cZeros = 0;
-        for (int i = 2048 / w - 1; i >= 0; i--) {
+        for (int i = 2048 / w ; i >= 0; i--) {
             if (this.arr[i] != 0) {
                 break;
             }
             cZeros++;
         }
-        return 2048 / w - cZeros;
+        return 2048 / w + 1 - cZeros;
     }
     public BigInt16 sub(BigInt16 b) {
         long borrow = 0;
+        int x = this.arr.length;
         BigInt16 c = new BigInt16();
-        for (int i = 0; i <= 2048/ w - 1; i++) {
+        for (int i = 0; i <= x - 1; i++) {
             long tmp = this.arr[i] - b.arr[i] - borrow;
             if (tmp >= 0 ) {
                 c.arr[i] = tmp;
@@ -65,7 +66,15 @@ public class BigInt16 {
         return c;
     }
     public short longCmp(BigInt16 b) {
-        int i = 2048 / w - 1;
+        int i = this.arr.length - 1;
+        if (this.arr.length > b.arr.length) {
+            BigInt16 newB = new BigInt16();
+            newB.arr = new long[this.arr.length];
+            for (int j = 0; j < b.arr.length; j++) {
+                newB.arr[j] = b.arr[j];
+            }
+            b = newB;
+        }
         while (this.arr[i] == b.arr[i]) {
             i -= 1;
             if (i == -1) {
@@ -99,13 +108,13 @@ public class BigInt16 {
         long carry = 0;
         long tmp;
         BigInt16 c = new BigInt16();
-        c.arr = new long[2048 / w];
-        for (int i = 0; i < this.size(); i++) {
+        c.arr = new long[2048 / w + 1];
+        for (int i = 0; i < 2048/ w + 1; i++) {
             tmp = this.arr[i] * b + carry;
             c.arr[i] = tmp & 65535L;
             carry = tmp >> w;
         }
-        if (c.size() < 2048 / w) {
+        if (c.size() < 2048 / w + 1) {
             c.arr[c.size()] = carry;
         }
         return c;
@@ -113,14 +122,14 @@ public class BigInt16 {
     public BigInt16 longMul(BigInt16 b) {
         BigInt16 c = new BigInt16();
         BigInt16 tmp ;
-        for (int i = 0; i < b.size(); i++) {
+        for (int i = 0; i < 2048/w + 1; i++) {
             tmp = this.longMulOneDigit(b.arr[i]);
             c = c.add(tmp.longShiftDigitsToHigh(i));
         }
         return c;
     }
     public int bitLength() {
-        if (Arrays.equals(this.arr, new BigInt16(0).arr)) {
+        if (this.size() == 0) {
             return 1;  // Для нуля битовая длина равна 1
         }
         int i = this.size() - 1;
@@ -171,31 +180,44 @@ public class BigInt16 {
 //            return out;
 //        }
 //    }
+//    private BigInt16 longShiftBitsToHigh2(int k) {
+//        BinaryString bs = new BinaryString(this);
+//        if (128 * 16 + 1 <= k) {
+//            return this;
+//        }
+//        for (int i = 0; i < k; i++) {
+//            bs.binary = bs.binary + "0";
+//        }
+//
+//        return bs.bsToBi16();
+//    }
     public BigInt16 longShiftBitsToHigh(int k) {
-        if (k <= 0 || k >= 128*16) {
+        if (k <= 0 || k > 128 * 16) {
             return this;
         }
+        int x = this.arr.length;
         int numOfShifts = k / 16;
         int shift = k % 16;
         long carry = 0;
         BigInt16 C = new BigInt16();
+        C.arr = new long[x];
         BigInt16 out = new BigInt16();
+        out.arr = new long[x];
         if (shift != 0) {
-            for (int i = 0; i < 128; i++) {
+            for (int i = 0; i < x; i++) {
                 long tmp = (this.arr[i] << shift) + carry;
                 C.arr[i] = tmp & 65535L;
-                carry = this.arr[i]  >> (16 - shift);
+                carry = this.arr[i] >> (16 - shift);
             }
-            for (int j =  numOfShifts; j < 128; j++) {
-                out.arr[j ] = C.arr[j-numOfShifts];
+            for (int j = numOfShifts; j < x; j++) {
+                out.arr[j] = C.arr[j - numOfShifts];
             }
             return out;
-        }
-        else {
-            for (int i  = 0; i < 128;i++) {
+        } else {
+            for (int i = 0; i < x; i++) {
                 C.arr[i] = this.arr[i];
             }
-            for (int j = numOfShifts; j < 128; j++) {
+            for (int j = numOfShifts; j < x; j++) {
                 out.arr[j] = C.arr[j - numOfShifts];
             }
             return out;
@@ -205,6 +227,7 @@ public class BigInt16 {
         int k = B.bitLength();
         BigInt16 R = new BigInt16(this);
         BigInt16 Q = new BigInt16();
+        Q.arr = new long[this.arr.length];
         while (R.longCmp(B) != -1) {
             int t = R.bitLength();
             BigInt16 C = B.longShiftBitsToHigh(t-k);
@@ -281,29 +304,27 @@ public class BigInt16 {
         return (this.longMul(b).longDiv(this.gcd(b)));
     }
     public BigInt16 barretReduction(BigInt16 n, BigInt16 mu) {
-        BigInt16 x = new BigInt16(this);
-
-        if (x.longCmp(n) == -1) {
-            return x;
-        }
-        if (x.longCmp(n) == 0) {
-            return new BigInt16();
-        }
         int k = n.size();
-        BigInt16 q = x.killLastDigits(k - 1);
+        BigInt16 A = new BigInt16(this);
+        if (A.longCmp(n) == -1) {
+            return A;
+        }
+        BigInt16 q= A.killLastDigits(k-1);
         q = q.longMul(mu);
         q = q.killLastDigits(k+1);
-        BigInt16 r = x.sub(q.longMul(n));
-        while (r.longCmp(n) != -1) {
+        BigInt16 r = A.sub(q.longMul(n));
+        while (r.longCmp(n) != - 1) {
             r = r.sub(n);
         }
         return r;
     }
     public static BigInt16 calculateMu(BigInt16 beta) {
         int k = beta.size();
-        BigInt16 mu = new BigInt16(1);
-        mu = mu.longShiftBitsToHigh(32*k);
-        return mu.longDiv(beta);
+        BigInt16 x = new BigInt16();
+        x.arr = new long[2048 / 16 + 1];
+        x.arr[0] = 1;
+        x = x.longShiftBitsToHigh(32*k );
+        return x.longDiv(beta);
     }
     public BigInt16 addMod(BigInt16 b, BigInt16 mod) {
         BigInt16 mu = calculateMu(mod);
@@ -313,8 +334,7 @@ public class BigInt16 {
     public BigInt16 subMod(BigInt16 b, BigInt16 mod) {
         BigInt16 mu = calculateMu(mod);
         b = b.barretReduction(mod, mu);
-        BigInt16 a = this.barretReduction(mod, mu);
-        BigInt16 c = a.longCmp(b) != -1 ? a.sub(b) : b.sub(a);
+        BigInt16 c = this.sub(b);
         c = c.barretReduction(mod, mu);
         return c;
     }
@@ -346,29 +366,22 @@ public class BigInt16 {
         return C;
     }
      */
-    public BigInt16 longModPowerReduction(BigInt16 B, BigInt16 N) {
+    public BigInt16 longModPowerReduction(BigInt16 B, BigInt16 N, BigInt16 mu) {
         BigInt16 A = new BigInt16(this);
-        BigInt16 C = new BigInt16(1);
-        BigInt16 mu = BigInt16.calculateMu(N);
-        String BinaryB = (new StringBuilder((new BinaryString(B).toString())).reverse()).toString();
         A = A.barretReduction(N, mu);
-        for (int i = BinaryB.length() - 1; i >= 0 ; i--) {
+        System.out.println(A);
+        BigInt16 C = new BigInt16(1);
+        String BinaryB = (new StringBuilder((new BinaryString(B).toString())).reverse()).toString();
+        for (int i = BinaryB.length() - 1; i >= 0; i--) {
+            System.out.println(C);
             if (BinaryB.charAt(i) == '1') {
-                C = A.productMod(C, N, mu);
+                C = C.productMod(A, N , mu);
             }
             if (i > 0) {
                 C = C.productMod(C, N, mu);
             }
         }
         return C;
-//        BigInt16 C = new BigInt16(this);
-//        String Bb = new StringBuilder((new BinaryString(B).toString())).reverse().toString();
-//        BigInt16 mu = BigInt16.calculateMu(N);
-//        int t = Integer.parseInt(Bb, 2);
-//        for (int i = 0; i < t-1; i++) {
-//            C = C.longMul(this).barretReduction(N,mu);
-//        }
-//        return C;
     }
     @Override
     public String toString() {
