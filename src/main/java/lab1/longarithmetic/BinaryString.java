@@ -57,6 +57,5 @@ public class BinaryString {
     public String toString() {
         this.removeZeros();
         return this.binary;
-//        return new StringBuilder(this.binary).reverse().toString();
     }
 }
